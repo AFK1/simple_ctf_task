@@ -5,17 +5,28 @@ import base64
 
 
 def registration(name, password):
-  f = open("./site/database.data", "a")
+  f = open("./site/passwords", "a")
   xor = []
   for i in range(len(password)):
-      xor.append(ord(password[i]) ^ ord(name[i%len(name)]))
+    xor.append(ord(password[i]) ^ ord(name[i%len(name)]))
   f.write(name)
   f.write(" ")
-  f.write(base64.b64encode(bytes(xor)))
+  f.write(str(base64.b64encode(bytes(xor)))[2:-1])
   f.write("\n")
 
 def delete_account(name, password):
-  pass
+  f = open("./site/passwords", "r")
+  lines = f.readlines()
+  f.close()
+  xor = []
+  for i in range(len(password)):
+    xor.append(ord(password[i]) ^ ord(name[i%len(name)]))
+
+  f = open("./site/passwords", "w")
+  for line in lines:
+    if line.strip("\n") != (name+" "+xor):
+      f.write(line)
+  f.close()
 
 class HttpGetHandler(BaseHTTPRequestHandler):
   def _response(self, code=200):
@@ -24,7 +35,29 @@ class HttpGetHandler(BaseHTTPRequestHandler):
     self.end_headers()
 
   def do_GET(self):
-    if (self.path[1:] in os.listdir("./site/")):
+    if (self.path.split("?")[0] == "/reg_me_pls"):
+      try:
+        args = dict([(i.split("=")[0], i.split("=")[1]) for i in self.path.split("?")[1].split("&")])
+        registration(args["nick"], args["password"])
+        self.send_response(301)
+        self.send_header('Location', './index.html')
+        self.end_headers()
+      except Exception as e:
+        print(e)
+        self._response(400)
+        self.wfile.write("wrong data".encode('utf-8'))
+    elif (self.path.split("?")[0] == "/del_me_pls"):
+      try:
+        args = dict([(i.split("=")[0], i.split("=")[1]) for i in self.path.split("?")[1].split("&")])
+        delete_account(args["nick"], args["password"])
+        self.send_response(301)
+        self.send_header('Location', './index.html')
+        self.end_headers()
+      except Exception as e:
+        print(e)
+        self._response(400)
+        self.wfile.write("wrong data".encode('utf-8'))
+    elif (self.path[1:] in os.listdir("./site/")):
       f = open("./site"+self.path, "r")
       self._response(200)
       self.wfile.write(f.read().encode('utf-8'))
@@ -35,14 +68,6 @@ class HttpGetHandler(BaseHTTPRequestHandler):
     else:
       self._response(404)
       self.wfile.write("not found".encode('utf-8'))
-
-  def do_POST(self):
-    content_length = int(self.headers['Content-Length'])
-    post_data = self.rfile.read(content_length)
-    print(post_data)
-
-    self._response()
-    self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
 
 def run(server_class=HTTPServer, handler_class=HttpGetHandler):
   server_address = ('', 9000)
