@@ -1,11 +1,21 @@
 from http.server import BaseHTTPRequestHandler
 from http.server import HTTPServer
 import os
+import base64
+
 
 def registration(name, password):
   f = open("./site/database.data", "a")
-  
-  f.write()
+  xor = []
+  for i in range(len(password)):
+      xor.append(ord(password[i]) ^ ord(name[i%len(name)]))
+  f.write(name)
+  f.write(" ")
+  f.write(base64.b64encode(bytes(xor)))
+  f.write("\n")
+
+def delete_account(name, password):
+  pass
 
 class HttpGetHandler(BaseHTTPRequestHandler):
   def _response(self, code=200):
@@ -29,6 +39,7 @@ class HttpGetHandler(BaseHTTPRequestHandler):
   def do_POST(self):
     content_length = int(self.headers['Content-Length'])
     post_data = self.rfile.read(content_length)
+    print(post_data)
 
     self._response()
     self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))

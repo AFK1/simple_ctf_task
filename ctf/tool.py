@@ -1,7 +1,7 @@
 import base64
 
-word = "ctf{N33d_p4Ssw0rD_haSh1ng}"
-key = "admin"
+word = "base64_password_"
+key = "user123"
 xor = []
 for i in range(len(word)):
     xor.append(ord(word[i]) ^ ord(key[i%len(key)]))
