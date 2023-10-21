@@ -15,6 +15,7 @@ def registration(name, password):
   f.write("\n")
 
 def delete_account(name, password):
+  print("a")
   f = open("./site/passwords", "r")
   lines = f.readlines()
   f.close()
@@ -23,8 +24,9 @@ def delete_account(name, password):
     xor.append(ord(password[i]) ^ ord(name[i%len(name)]))
 
   f = open("./site/passwords", "w")
+  print("try to delete", (str(base64.b64encode(bytes(xor)))[2:-1]), name)
   for line in lines:
-    if line.strip("\n") != (name+" "+xor):
+    if line.strip("\n") != (name+" "+(str(base64.b64encode(bytes(xor)))[2:-1])):
       f.write(line)
   f.close()
 
@@ -47,6 +49,7 @@ class HttpGetHandler(BaseHTTPRequestHandler):
         self._response(400)
         self.wfile.write("wrong data".encode('utf-8'))
     elif (self.path.split("?")[0] == "/del_me_pls"):
+      print("a")
       try:
         args = dict([(i.split("=")[0], i.split("=")[1]) for i in self.path.split("?")[1].split("&")])
         delete_account(args["nick"], args["password"])
